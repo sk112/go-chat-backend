@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 )
@@ -103,7 +104,8 @@ func main() {
 	r.Use(authMiddlerware.Middleware)
 
 	//Server Listen...
-	log.Fatal(http.ListenAndServe(":8080", r))
+	port := os.Getenv("PORT")
+	log.Fatal(http.ListenAndServe(":"+port, r))
 
 }
 
