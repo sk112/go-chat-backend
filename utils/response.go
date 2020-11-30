@@ -17,7 +17,7 @@ type ResponseModel struct {
 func Send(w http.ResponseWriter, log string, code int, message string, data interface{}) {
 	fmt.Println(time.Now().Local().Format("2006.01.02 15:04:05"), log)
 	w.Header().Add("Content-Type", "application/json")
-	w.Header().Add("Access-Control-Allow-Origin", "https://immense-scrubland-85764.herokuapp.com")
+	w.Header().Add("Access-Control-Allow-Origin", "https://immense-scrubland-85764.herokuapp.com/")
 	w.Header().Add("Access-Control-Allow-Credentials", "true")
 	w.Header().Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	w.WriteHeader(code)
@@ -41,7 +41,7 @@ func Send(w http.ResponseWriter, log string, code int, message string, data inte
 // NOTE a proxy can be set up in react app to redirect the calls to the port on golang which server is running
 func SendPreflightResponse(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(time.Now().Local().Format("2006.01.02 15:04:05"), "response: sending preflight response for CORS")
-	w.Header().Add("Access-Control-Allow-Origin", "https://immense-scrubland-85764.herokuapp.com")
+	w.Header().Add("Access-Control-Allow-Origin", "https://immense-scrubland-85764.herokuapp.com/")
 	w.Header().Add("Access-Control-Allow-Headers", "Content-Type, Origin, Accept, Authorization")
 	w.Header().Add("Access-Control-Allow-Credentials", "true")
 	w.Header().Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
