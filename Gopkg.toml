@@ -1,0 +1,5 @@
+[metadata.heroku]
+  root-package = "chat"
+  go-version = "1.10.1"
+  build = ["."]
+  ensure = "false"
