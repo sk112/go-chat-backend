@@ -75,6 +75,7 @@ func main() {
 
 	go hub.Run()
 
+	auth.InitAuthDb()
 	hub.InitServer()
 
 	// preflight conditions check
@@ -100,8 +101,6 @@ func main() {
 	authMiddlerware := AuthenticationMiddleware{}
 
 	r.Use(authMiddlerware.Middleware)
-
-	auth.InitAuthDb()
 
 	//Server Listen...
 	log.Fatal(http.ListenAndServe(":8080", r))
