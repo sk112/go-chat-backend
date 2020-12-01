@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 )
@@ -93,7 +92,6 @@ func main() {
 	r.HandleFunc("/signup", auth.SignUpHandler).Methods("POST")
 	r.HandleFunc("/login", auth.LoginHandler).Methods("POST")
 	r.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-
 		server.ConnectionHandler(hub, w, r)
 	})
 
@@ -104,8 +102,8 @@ func main() {
 	r.Use(authMiddlerware.Middleware)
 
 	//Server Listen...
-	port := os.Getenv("PORT")
-	log.Fatal(http.ListenAndServe(":"+port, r))
+	// port := os.Getenv("PORT")
+	log.Fatal(http.ListenAndServe(":8080", r))
 
 }
 
