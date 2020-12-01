@@ -25,7 +25,7 @@ var DB *gorm.DB
 
 func init() {
 
-	dsn := "host=ec2-54-163-47-62.compute-1.amazonaws.com user=bfrsdcmkvfmiwf password=b2672c03597978511affde364b3f8cb3c64944228627c40d4ed6318a581595c8 dbname=d4urqcaecbfcmp port=5432"
+	dsn := "host=ec2-52-71-153-228.compute-1.amazonaws.com user=xelxqkwnnrmwmi password=202ace837067b1fcb5d81a167019d1e1e6e1e033a1aa6cbab33562ad225bcef1 dbname=da6lspqu3sdmga port=5432"
 
 	var err error
 	// DB, err = gorm.Open(sqlite.Open(DBPath), &gorm.Config{})
