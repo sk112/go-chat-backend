@@ -6,6 +6,11 @@ import (
 	"log"
 )
 
+//User ...
+type User struct {
+	UserID string `json:"userid"`
+}
+
 //UserCtx ...
 type UserCtx string
 

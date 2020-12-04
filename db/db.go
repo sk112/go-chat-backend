@@ -1,37 +1,30 @@
 package db
 
-import (
-	"log"
+// var (
+// 	//DBPath for db init
+// 	DBPath = "C:\\Users\\mohammak\\Documents\\projects-learning\\go-learning\\chat\\backend\\db.sqlite3"
+// )
 
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-)
+// const (
+// 	host     = "localhost"
+// 	port     = 5432
+// 	user     = "postgres"
+// 	password = "your-password"
+// 	dbname   = "calhounio_demo"
+// )
 
-var (
-	//DBPath for db init
-	DBPath = "C:\\Users\\mohammak\\Documents\\projects-learning\\go-learning\\chat\\backend\\db.sqlite3"
-)
+// //DB ...
+// var DB *gorm.DB
 
-const (
-	host     = "localhost"
-	port     = 5432
-	user     = "postgres"
-	password = "your-password"
-	dbname   = "calhounio_demo"
-)
+// func init() {
 
-//DB ...
-var DB *gorm.DB
+// 	// dsn := "host=ec2-52-71-153-228.compute-1.amazonaws.com user=xelxqkwnnrmwmi password=202ace837067b1fcb5d81a167019d1e1e6e1e033a1aa6cbab33562ad225bcef1 dbname=da6lspqu3sdmga port=5432"
 
-func init() {
+// 	var err error
+// 	DB, err = gorm.Open(sqlite.Open(DBPath), &gorm.Config{})
+// 	// DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+// 	if err != nil {
+// 		log.Fatal("DB init failed")
+// 	}
 
-	dsn := "host=ec2-52-71-153-228.compute-1.amazonaws.com user=xelxqkwnnrmwmi password=202ace837067b1fcb5d81a167019d1e1e6e1e033a1aa6cbab33562ad225bcef1 dbname=da6lspqu3sdmga port=5432"
-
-	var err error
-	// DB, err = gorm.Open(sqlite.Open(DBPath), &gorm.Config{})
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatal("DB init failed")
-	}
-
-}
+// }

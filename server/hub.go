@@ -1,49 +1,122 @@
 package server
 
 import (
-	"log"
+	"chat/auth"
+	"chat/db"
+	"fmt"
+	"net/http"
+
+	"github.com/gorilla/websocket"
 )
+
+//HubConnections map[string]*websocket.Conn
+type HubConnections struct {
+	Conns       map[string]*websocket.Conn
+	PublishUser chan auth.User
+}
 
 //Hub ...
 type Hub struct {
-	Clients   map[string]*Client
-	DoServe   chan *Client
-	Entered   chan *Client
-	Broadcast chan Message
+	Pool    map[string]*Client
+	Entered chan *Client
 }
 
-//Run ...
-func (h *Hub) Run() {
+//RunPool : Init for all Client connection to listen on the channel.
+func (h *Hub) RunPool() {
+
 	for {
 		select {
-		case client := <-h.DoServe:
-			h.Clients[client.user.UserID] = client
-		case client := <-h.Entered:
-			log.Println("hub: user enter >", client.user.UserID)
+		case registerClient := <-h.Entered:
+			h.Pool[registerClient.ConnID] = registerClient
 
-			if len(client.queueMsg) > 0 {
-				client.message <- client.queueMsg
+			for k, v := range h.Pool {
+				fmt.Println(k, v)
 			}
-			// h.Clients[client.user.UserID] = client
-		case msg := <-h.Broadcast:
-			m := []Message{msg}
-
-			if h.Clients[msg.To].conn != nil {
-
-				h.Clients[msg.To].message <- m
-			} else {
-				t := append(h.Clients[msg.To].queueMsg, msg)
-				h.Clients[msg.To].queueMsg = t
-			}
-
-			if h.Clients[msg.From] != nil {
-				h.Clients[msg.From].message <- m
-			}
-			// else {
-			// 	t := append(h.Clients[msg.From].queueMsg, msg)
-			// 	h.Clients[msg.From].queueMsg = t
-			// }
-
 		}
+	}
+}
+
+func (h *Hub) writeToHub(r *http.Request) {
+	for {
+
+		select {
+		case user, ok := <-h.Entered:
+
+			fmt.Println(user, ok)
+		}
+
+	}
+}
+
+//JoinHubHandler ...
+func (h *HubConnections) JoinHubHandler(w http.ResponseWriter, r *http.Request) {
+	var upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+	upgrader.CheckOrigin = func(r *http.Request) bool {
+		return true
+	}
+
+	conn, err := upgrader.Upgrade(w, r, nil)
+
+	if err != nil {
+		fmt.Println("<error> Join hub : upgrader error", err)
+	}
+
+	h.Conns[r.Context().Value(auth.UserKey).(auth.User).UserID] = conn
+
+	go h.BroadCastToUser()
+
+	h.PublishUser <- r.Context().Value(auth.UserKey).(auth.User)
+}
+
+//BroadCastToUser ...
+func (h *HubConnections) BroadCastToUser() {
+
+	for {
+		select {
+		case user, ok := <-h.PublishUser:
+
+			if !ok {
+				fmt.Println("<error> write to user: received an error")
+			}
+
+			for k, v := range h.Conns {
+
+				if v != nil {
+					w, err := v.NextWriter(websocket.TextMessage)
+
+					if err != nil {
+
+						if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+							fmt.Printf("<error> next writer error-unexpected close : %v", err)
+
+							db.DB.Table("users").Where("user_id =", k).Delete(&auth.User{})
+							return
+						}
+						fmt.Println("<error> write to user: next wrtiter failed: ", err)
+						return
+					}
+
+					w.Write([]byte(user.UserID))
+				}
+
+			}
+		}
+	}
+}
+
+func (h *HubConnections) ReadFromUser() {
+
+	for k, v := range h.Conns{
+		go func(){
+			r ,err := v.ReadMessage()
+
+			if err != nil{
+				fmt.Println("")
+			}
+		}
+
 	}
 }

@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	host = "https://desolate-brook-30710.herokuapp.com"
+	host = "http://localhost:3000"
 )
 
 //ResponseModel to send responses
