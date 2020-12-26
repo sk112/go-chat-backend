@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"chat/db"
 	"chat/utils"
 	"log"
 	"time"
@@ -10,13 +9,11 @@ import (
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
-	"golang.org/x/crypto/bcrypt"
 )
 
 //LoginForm ...
 type LoginForm struct {
-	UserID   string `json:"userid"`
-	Password string
+	UserID string `json:"userid"`
 }
 
 //LoginHandler ...
@@ -43,23 +40,21 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := User{}
-	err = db.DB.Table("users").Where("user_id = ?", form.UserID).First(&user).Error
+	// err = db.DB.Table("users").Where("user_id = ?", form.UserID).First(&user).Error
 
-	// fmt.Println("user err", err)
-	if err != nil {
-		// fmt.Println("User Does not exists")
-		// http.Error(w, err.Error(), http.StatusBadRequest)
-		utils.Send(w, "auth: user extraction failed", http.StatusBadRequest, "user does not exists", []byte("{}"))
-		return
-	}
+	// // fmt.Println("user err", err)
+	// if err != nil {
+	// 	result := db.DB.Table("users").Create(&form)
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(form.Password))
-	if err != nil {
-		// http.Error(w, " Password does not match", http.StatusBadRequest)
-		utils.Send(w, "auth: password does not match", http.StatusBadRequest, "password Incorrect", []byte("{}"))
-		return
-	}
+	// 	if result.Error != nil {
+	// 		utils.Send(w, "auth: user insert failed ", http.StatusBadRequest, "user insert failed", []byte("{}"))
+	// 		return
+	// 	}
 
+	// 	user.UserID = form.UserID
+	// }
+
+	user.UserID = form.UserID
 	claims := jwt.MapClaims{}
 
 	claims["userid"] = user.UserID

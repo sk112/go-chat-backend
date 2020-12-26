@@ -2,115 +2,81 @@ package server
 
 import (
 	"chat/auth"
-	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
 )
 
-//Client ...
-type Client struct {
-	hub      *Hub
-	conn     *websocket.Conn
-	user     auth.User
-	message  chan []Message
-	queueMsg []Message
+//Hub :
+type Hub struct {
+	// Users[test][test1] = ChatUSer
+	Users map[string]map[string]*ChatUser
 }
 
-//Message ...
-type Message struct {
-	From        string `json:"from"`
-	To          string `json:"to"`
-	TextMessage string `json:"message"`
+//ChatUser :
+type ChatUser struct {
+	From    string
+	With    string
+	Conn    *websocket.Conn
+	Hub     *Hub
+	Message chan []byte
 }
 
-var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
-)
+func (c *ChatUser) readMessage() {
+	for {
+		_, msg, err := c.Conn.ReadMessage()
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				fmt.Printf("<error>  ReadMessage error-unexpected close : %v", err)
+
+				return
+			}
+			fmt.Printf("<error>  ReadMessage error-unexpected close : %v", err)
+
+			return
+		}
+
+		fmt.Println("message: ", c.With, c.From, string(msg))
+		//Forwarding message by c.with->c.from connection.
+		c.Hub.Users[c.With][c.From].Message <- msg
+
+	}
 }
 
-func (c *Client) writePump(r *http.Request) {
-
-	defer func() {
-		c.conn.Close()
-	}()
+func (c *ChatUser) writeMessage() {
 
 	for {
 		select {
-		case msg, ok := <-c.message:
-			if !ok {
-				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
-				return
-			}
+		case msg := <-c.Message:
+			w, err := c.Conn.NextWriter(websocket.TextMessage)
 
-			
-
-			w, err := c.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-					log.Printf("next writer error-unexpected close : %v", err)
+					fmt.Printf("<error>  NextWriter error-unexpected close : %v", err)
 					return
 				}
-				fmt.Println("next writer: error", err)
+				fmt.Printf("<error>  NextWriter error-unexpected close : %v", err)
+
 				return
 			}
 
-			// fmt.Println("writePump: ", c.user.UserID, " ----should be-->", msg.From, "---logged in user--->", r.Context().Value(auth.UserKey).(auth.User))
-
-			marshalledMsg, err := json.Marshal(&msg)
-
-			fmt.Println("writePump :", string(marshalledMsg))
-			w.Write(marshalledMsg)
-
+			w.Write(msg)
 			w.Close()
 		}
 	}
 }
 
-func (c *Client) readPump() {
-	defer func() {
-		// c.conn.Close()
-		c.conn = nil
-	}()
+//ConnectHandler :
+func (h *Hub) ConnectHandler(w http.ResponseWriter, r *http.Request) {
 
-	for {
+	with := r.FormValue("with")
 
-		msg := Message{}
-
-		_, t, err := c.conn.ReadMessage()
-
-		// if err != nil {
-		// 	fmt.Println("read pump: read failed: err : ", err)
-		// 	return
-		// }
-
-		fmt.Println("read pump: message", msg)
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("read pump: error - unexpected close: %v", err)
-				return
-			}
-			fmt.Println("read pump: read failed: err : ", err)
-			return
-		}
-
-		err = json.Unmarshal(t, &msg)
-
-		fmt.Println(msg, err)
-		c.hub.Broadcast <- msg
+	var upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
 	}
-}
-
-//ConnectionHandler ...
-func ConnectionHandler(hub *Hub, w http.ResponseWriter, r *http.Request) {
-
 	upgrader.CheckOrigin = func(r *http.Request) bool {
 		return true
 	}
@@ -118,16 +84,25 @@ func ConnectionHandler(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 
 	if err != nil {
-		log.Fatal("upgrader error", err)
-		return
+		fmt.Println("<error> Join hub : upgrader error", err)
 	}
 
-	client := hub.Clients[r.Context().Value(auth.UserKey).(auth.User).UserID]
+	userid := r.Context().Value(auth.UserKey).(auth.User).UserID
 
-	client.conn = conn
+	chat := &ChatUser{
+		From:    userid,
+		With:    with,
+		Conn:    conn,
+		Hub:     h,
+		Message: make(chan []byte),
+	}
 
-	go client.readPump()
-	go client.writePump(r)
+	if h.Users[userid] == nil {
+		h.Users[userid] = make(map[string]*ChatUser)
+	}
 
-	client.hub.Entered <- client
+	h.Users[userid][with] = chat
+
+	go chat.readMessage()
+	go chat.writeMessage()
 }

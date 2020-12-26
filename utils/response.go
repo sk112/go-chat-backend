@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	host = "https://immense-scrubland-85764.herokuapp.com"
+	host = "http://192.168.1.7:3000"
 )
 
 //ResponseModel to send responses

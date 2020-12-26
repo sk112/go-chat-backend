@@ -30,7 +30,7 @@ func GetJSONPOSTBody(r *http.Request) ([]byte, error) {
 func ExtractToken(r *http.Request) string {
 
 	var bearToken string
-	if r.URL.Path == "/ws" {
+	if r.URL.Path == "/ws" || r.URL.Path == "/joinhub" || r.URL.Path == "/connect" {
 		bearToken = r.FormValue("token")
 	} else {
 		bearToken = r.Header.Get("Authorization")
