@@ -2,7 +2,6 @@ package server
 
 import (
 	"chat/auth"
-	"chat/db"
 	"chat/utils"
 	"net/http"
 )
@@ -12,7 +11,7 @@ func GetFriendsHandler(w http.ResponseWriter, r *http.Request) {
 
 	var users []auth.User
 
-	db.DB.Table("users").Find(&users)
+	// db.DB.Table("users").Find(&users)
 
 	// jsonUsers, err := json.Marshal(&users)
 

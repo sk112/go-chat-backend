@@ -2,7 +2,6 @@ package main
 
 import (
 	"chat/auth"
-	"chat/db"
 	"chat/server"
 	"chat/utils"
 	"context"
@@ -11,7 +10,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 )
 
 //AuthenticationMiddleware ...
@@ -27,14 +25,10 @@ func (middleware *AuthenticationMiddleware) Middleware(next http.Handler) http.H
 
 			next.ServeHTTP(w, r)
 		} else {
-			userid, err := utils.VerifyToken(r)
+			userid, _ := utils.VerifyToken(r)
 
-			user := auth.User{}
-			err = db.DB.Table("users").Where("user_id = ?", userid).First(&user).Error
-
-			if err != nil {
-				http.Error(w, "Auth Failed/ User Does not exists", http.StatusBadRequest)
-				return
+			user := auth.User{
+				UserID: userid.(string),
 			}
 
 			log.Println("middleware: userid - token in middleware :", userid)
@@ -42,7 +36,6 @@ func (middleware *AuthenticationMiddleware) Middleware(next http.Handler) http.H
 			ctx := context.WithValue(r.Context(), auth.UserKey, user)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
-			fmt.Println()
 
 		}
 	})
@@ -50,18 +43,16 @@ func (middleware *AuthenticationMiddleware) Middleware(next http.Handler) http.H
 
 func main() {
 
-	hub := server.Hub{
-		Pool: make(map[string]*server.Client),
-	}
-	hubconns := server.HubConnections{
-		Conns:       make(map[string]*websocket.Conn),
-		PublishUser: make(chan auth.User),
+	hubRoom := &server.HubRoom{
+		Conns:   make(map[string]*server.ClientInHub),
+		Entered: make(chan *server.ClientInHub),
+		Left:    make(chan *server.ClientInHub),
 	}
 
 	r := mux.NewRouter()
-
-	auth.InitAuthDb()
-	go hub.RunPool()
+	// go hubRoom.WriteToUsers()
+	go hubRoom.EnterRoom()
+	go hubRoom.WaitTillLeft()
 
 	// preflight conditions check
 	r.Methods("OPTIONS").HandlerFunc(
@@ -70,9 +61,14 @@ func main() {
 		})
 
 	r.HandleFunc("/login", auth.LoginHandler).Methods("POST")
-	r.HandleFunc("/ws", hub.WSHandler)
-	r.HandleFunc("/joinhub", hubconns.JoinHubHandler)
-	r.HandleFunc("/users", server.GetFriendsHandler).Methods("GET")
+	r.HandleFunc("/joinhub", hubRoom.JoinHubHandler)
+
+	hub := &server.Hub{
+		Users: make(map[string]map[string]*server.ChatUser),
+	}
+
+	r.HandleFunc("/connect", hub.ConnectHandler)
+
 	authMiddlerware := AuthenticationMiddleware{}
 
 	r.Use(authMiddlerware.Middleware)

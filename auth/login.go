@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"chat/db"
 	"chat/utils"
 	"log"
 	"time"
@@ -41,20 +40,21 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := User{}
-	err = db.DB.Table("users").Where("user_id = ?", form.UserID).First(&user).Error
+	// err = db.DB.Table("users").Where("user_id = ?", form.UserID).First(&user).Error
 
-	// fmt.Println("user err", err)
-	if err != nil {
-		result := db.DB.Table("users").Create(&form)
+	// // fmt.Println("user err", err)
+	// if err != nil {
+	// 	result := db.DB.Table("users").Create(&form)
 
-		if result.Error != nil {
-			utils.Send(w, "auth: user insert failed ", http.StatusBadRequest, "user insert failed", []byte("{}"))
-			return
-		}
+	// 	if result.Error != nil {
+	// 		utils.Send(w, "auth: user insert failed ", http.StatusBadRequest, "user insert failed", []byte("{}"))
+	// 		return
+	// 	}
 
-		user.UserID = form.UserID
-	}
+	// 	user.UserID = form.UserID
+	// }
 
+	user.UserID = form.UserID
 	claims := jwt.MapClaims{}
 
 	claims["userid"] = user.UserID
