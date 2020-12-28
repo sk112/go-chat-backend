@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	// host = "https://intense-brushlands-00494.herokuapp.com"
-	host = "http://192.168.1.7:3000"
+	host = "https://intense-brushlands-00494.herokuapp.com"
+	// host = "http://192.168.1.7:3000"
 )
 
 //ResponseModel to send responses
