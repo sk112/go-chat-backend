@@ -20,6 +20,7 @@ type AuthenticationMiddleware struct {
 //Middleware ...
 func (middleware *AuthenticationMiddleware) Middleware(next http.Handler) http.Handler {
 
+	// time.Sleep(5 * time.Second)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(r.URL.Path)
 		if r.URL.Path == auth.LoginPath || r.Method == "OPTIONS" {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -38,6 +39,9 @@ type HubRoom struct {
 //JoinHubHandler :
 func (h *HubRoom) JoinHubHandler(w http.ResponseWriter, r *http.Request) {
 
+	try := r.FormValue("try")
+
+	fmt.Println(">>>>>>>>>>Retrying count :", try)
 	var upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -69,6 +73,11 @@ func (h *HubRoom) JoinHubHandler(w http.ResponseWriter, r *http.Request) {
 
 func (cih *ClientInHub) readFromUser(conn *websocket.Conn, userid string, r *http.Request) {
 	// go cih.waitTillLeft()
+	defer func() {
+		cih.Conn.Close()
+	}()
+
+	cih.Conn.SetReadDeadline(time.Now().Add(24 * time.Hour))
 
 	defer func() {
 		conn.Close()
@@ -94,13 +103,16 @@ func (cih *ClientInHub) readFromUser(conn *websocket.Conn, userid string, r *htt
 
 //WriteToUser :
 func (cih *ClientInHub) WriteToUser() {
+	defer func() {
+		cih.Conn.Close()
+	}()
 
 	for {
 		select {
 		case msg := <-cih.TellClient:
 
 			// for k, v := range h.Conns {
-
+			cih.Conn.SetWriteDeadline(time.Now().Add(24 * time.Hour))
 			w, err := cih.Conn.NextWriter(websocket.TextMessage)
 
 			if err != nil {
